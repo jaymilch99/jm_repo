@@ -1,0 +1,1161 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true
+   },
+   "source": [
+    "In this project we will be working with a dataset of employee exit surveys from the Department of Education, Training, and Employment (DETE) and the Technical and Further Education (TAFE) institute in Queensland, Australia. We are looking to answer the following questions:\n",
+    "\n",
+    "1) Are employees who only worked for the institutes for a short period of time resigning due to some kind of dissatisfaction? What about employees who have been there longer?\n",
+    "\n",
+    "2) Are younger employees resigning due to some kind of dissatisfaction? What about older employees?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "dete_survey = pd.read_csv('dete_survey.csv')\n",
+    "tafe_survey = pd.read_csv('tafe_survey.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "DETE Survey dataset:\n",
+      "\n",
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 822 entries, 0 to 821\n",
+      "Data columns (total 56 columns):\n",
+      " #   Column                               Non-Null Count  Dtype \n",
+      "---  ------                               --------------  ----- \n",
+      " 0   ID                                   822 non-null    int64 \n",
+      " 1   SeparationType                       822 non-null    object\n",
+      " 2   Cease Date                           822 non-null    object\n",
+      " 3   DETE Start Date                      822 non-null    object\n",
+      " 4   Role Start Date                      822 non-null    object\n",
+      " 5   Position                             817 non-null    object\n",
+      " 6   Classification                       455 non-null    object\n",
+      " 7   Region                               822 non-null    object\n",
+      " 8   Business Unit                        126 non-null    object\n",
+      " 9   Employment Status                    817 non-null    object\n",
+      " 10  Career move to public sector         822 non-null    bool  \n",
+      " 11  Career move to private sector        822 non-null    bool  \n",
+      " 12  Interpersonal conflicts              822 non-null    bool  \n",
+      " 13  Job dissatisfaction                  822 non-null    bool  \n",
+      " 14  Dissatisfaction with the department  822 non-null    bool  \n",
+      " 15  Physical work environment            822 non-null    bool  \n",
+      " 16  Lack of recognition                  822 non-null    bool  \n",
+      " 17  Lack of job security                 822 non-null    bool  \n",
+      " 18  Work location                        822 non-null    bool  \n",
+      " 19  Employment conditions                822 non-null    bool  \n",
+      " 20  Maternity/family                     822 non-null    bool  \n",
+      " 21  Relocation                           822 non-null    bool  \n",
+      " 22  Study/Travel                         822 non-null    bool  \n",
+      " 23  Ill Health                           822 non-null    bool  \n",
+      " 24  Traumatic incident                   822 non-null    bool  \n",
+      " 25  Work life balance                    822 non-null    bool  \n",
+      " 26  Workload                             822 non-null    bool  \n",
+      " 27  None of the above                    822 non-null    bool  \n",
+      " 28  Professional Development             808 non-null    object\n",
+      " 29  Opportunities for promotion          735 non-null    object\n",
+      " 30  Staff morale                         816 non-null    object\n",
+      " 31  Workplace issue                      788 non-null    object\n",
+      " 32  Physical environment                 817 non-null    object\n",
+      " 33  Worklife balance                     815 non-null    object\n",
+      " 34  Stress and pressure support          810 non-null    object\n",
+      " 35  Performance of supervisor            813 non-null    object\n",
+      " 36  Peer support                         812 non-null    object\n",
+      " 37  Initiative                           813 non-null    object\n",
+      " 38  Skills                               811 non-null    object\n",
+      " 39  Coach                                767 non-null    object\n",
+      " 40  Career Aspirations                   746 non-null    object\n",
+      " 41  Feedback                             792 non-null    object\n",
+      " 42  Further PD                           768 non-null    object\n",
+      " 43  Communication                        814 non-null    object\n",
+      " 44  My say                               812 non-null    object\n",
+      " 45  Information                          816 non-null    object\n",
+      " 46  Kept informed                        813 non-null    object\n",
+      " 47  Wellness programs                    766 non-null    object\n",
+      " 48  Health & Safety                      793 non-null    object\n",
+      " 49  Gender                               798 non-null    object\n",
+      " 50  Age                                  811 non-null    object\n",
+      " 51  Aboriginal                           16 non-null     object\n",
+      " 52  Torres Strait                        3 non-null      object\n",
+      " 53  South Sea                            7 non-null      object\n",
+      " 54  Disability                           23 non-null     object\n",
+      " 55  NESB                                 32 non-null     object\n",
+      "dtypes: bool(18), int64(1), object(37)\n",
+      "memory usage: 258.6+ KB\n",
+      "None\n",
+      "   ID                    SeparationType Cease Date DETE Start Date  \\\n",
+      "0   1             Ill Health Retirement    08/2012            1984   \n",
+      "1   2  Voluntary Early Retirement (VER)    08/2012      Not Stated   \n",
+      "2   3  Voluntary Early Retirement (VER)    05/2012            2011   \n",
+      "3   4         Resignation-Other reasons    05/2012            2005   \n",
+      "4   5                    Age Retirement    05/2012            1970   \n",
+      "\n",
+      "  Role Start Date                                      Position  \\\n",
+      "0            2004                                Public Servant   \n",
+      "1      Not Stated                                Public Servant   \n",
+      "2            2011                               Schools Officer   \n",
+      "3            2006                                       Teacher   \n",
+      "4            1989  Head of Curriculum/Head of Special Education   \n",
+      "\n",
+      "  Classification              Region                      Business Unit  \\\n",
+      "0        A01-A04      Central Office  Corporate Strategy and Peformance   \n",
+      "1        AO5-AO7      Central Office  Corporate Strategy and Peformance   \n",
+      "2            NaN      Central Office               Education Queensland   \n",
+      "3        Primary  Central Queensland                                NaN   \n",
+      "4            NaN          South East                                NaN   \n",
+      "\n",
+      "     Employment Status  ...  Kept informed  Wellness programs  \\\n",
+      "0  Permanent Full-time  ...              N                  N   \n",
+      "1  Permanent Full-time  ...              N                  N   \n",
+      "2  Permanent Full-time  ...              N                  N   \n",
+      "3  Permanent Full-time  ...              A                  N   \n",
+      "4  Permanent Full-time  ...              N                  A   \n",
+      "\n",
+      "   Health & Safety  Gender          Age  Aboriginal  Torres Strait  South Sea  \\\n",
+      "0                N    Male        56-60         NaN            NaN        NaN   \n",
+      "1                N    Male        56-60         NaN            NaN        NaN   \n",
+      "2                N    Male  61 or older         NaN            NaN        NaN   \n",
+      "3                A  Female        36-40         NaN            NaN        NaN   \n",
+      "4                M  Female  61 or older         NaN            NaN        NaN   \n",
+      "\n",
+      "   Disability  NESB  \n",
+      "0         NaN   Yes  \n",
+      "1         NaN   NaN  \n",
+      "2         NaN   NaN  \n",
+      "3         NaN   NaN  \n",
+      "4         NaN   NaN  \n",
+      "\n",
+      "[5 rows x 56 columns]\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Exploring the DETE dataset\n",
+    "print(\"DETE Survey dataset:\\n\")\n",
+    "print(dete_survey.info())\n",
+    "print(dete_survey.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The dataset has a few columns that contain a lot of NaN values. 'Business Unit', 'Aboriginal', 'Sorres Strait', 'South Sea', 'Disability', 'NESB' are all going to need to have values filled in or the columns will need to be deleted entirely because of the number of NaN values in them. Also, some columns have 'Not Stated' as a value instead of NaN, which will need to be cleaned."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "TAFE Survey dataset:\n",
+      "\n",
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 702 entries, 0 to 701\n",
+      "Data columns (total 72 columns):\n",
+      " #   Column                                                                                                                                                         Non-Null Count  Dtype  \n",
+      "---  ------                                                                                                                                                         --------------  -----  \n",
+      " 0   Record ID                                                                                                                                                      702 non-null    float64\n",
+      " 1   Institute                                                                                                                                                      702 non-null    object \n",
+      " 2   WorkArea                                                                                                                                                       702 non-null    object \n",
+      " 3   CESSATION YEAR                                                                                                                                                 695 non-null    float64\n",
+      " 4   Reason for ceasing employment                                                                                                                                  701 non-null    object \n",
+      " 5   Contributing Factors. Career Move - Public Sector                                                                                                              437 non-null    object \n",
+      " 6   Contributing Factors. Career Move - Private Sector                                                                                                             437 non-null    object \n",
+      " 7   Contributing Factors. Career Move - Self-employment                                                                                                            437 non-null    object \n",
+      " 8   Contributing Factors. Ill Health                                                                                                                               437 non-null    object \n",
+      " 9   Contributing Factors. Maternity/Family                                                                                                                         437 non-null    object \n",
+      " 10  Contributing Factors. Dissatisfaction                                                                                                                          437 non-null    object \n",
+      " 11  Contributing Factors. Job Dissatisfaction                                                                                                                      437 non-null    object \n",
+      " 12  Contributing Factors. Interpersonal Conflict                                                                                                                   437 non-null    object \n",
+      " 13  Contributing Factors. Study                                                                                                                                    437 non-null    object \n",
+      " 14  Contributing Factors. Travel                                                                                                                                   437 non-null    object \n",
+      " 15  Contributing Factors. Other                                                                                                                                    437 non-null    object \n",
+      " 16  Contributing Factors. NONE                                                                                                                                     437 non-null    object \n",
+      " 17  Main Factor. Which of these was the main factor for leaving?                                                                                                   113 non-null    object \n",
+      " 18  InstituteViews. Topic:1. I feel the senior leadership had a clear vision and direction                                                                         608 non-null    object \n",
+      " 19  InstituteViews. Topic:2. I was given access to skills training to help me do my job better                                                                     613 non-null    object \n",
+      " 20  InstituteViews. Topic:3. I was given adequate opportunities for personal development                                                                           610 non-null    object \n",
+      " 21  InstituteViews. Topic:4. I was given adequate opportunities for promotion within %Institute]Q25LBL%                                                            608 non-null    object \n",
+      " 22  InstituteViews. Topic:5. I felt the salary for the job was right for the responsibilities I had                                                                615 non-null    object \n",
+      " 23  InstituteViews. Topic:6. The organisation recognised when staff did good work                                                                                  607 non-null    object \n",
+      " 24  InstituteViews. Topic:7. Management was generally supportive of me                                                                                             614 non-null    object \n",
+      " 25  InstituteViews. Topic:8. Management was generally supportive of my team                                                                                        608 non-null    object \n",
+      " 26  InstituteViews. Topic:9. I was kept informed of the changes in the organisation which would affect me                                                          610 non-null    object \n",
+      " 27  InstituteViews. Topic:10. Staff morale was positive within the Institute                                                                                       602 non-null    object \n",
+      " 28  InstituteViews. Topic:11. If I had a workplace issue it was dealt with quickly                                                                                 601 non-null    object \n",
+      " 29  InstituteViews. Topic:12. If I had a workplace issue it was dealt with efficiently                                                                             597 non-null    object \n",
+      " 30  InstituteViews. Topic:13. If I had a workplace issue it was dealt with discreetly                                                                              601 non-null    object \n",
+      " 31  WorkUnitViews. Topic:14. I was satisfied with the quality of the management and supervision within my work unit                                                609 non-null    object \n",
+      " 32  WorkUnitViews. Topic:15. I worked well with my colleagues                                                                                                      605 non-null    object \n",
+      " 33  WorkUnitViews. Topic:16. My job was challenging and interesting                                                                                                607 non-null    object \n",
+      " 34  WorkUnitViews. Topic:17. I was encouraged to use my initiative in the course of my work                                                                        610 non-null    object \n",
+      " 35  WorkUnitViews. Topic:18. I had sufficient contact with other people in my job                                                                                  613 non-null    object \n",
+      " 36  WorkUnitViews. Topic:19. I was given adequate support and co-operation by my peers to enable me to do my job                                                   609 non-null    object \n",
+      " 37  WorkUnitViews. Topic:20. I was able to use the full range of my skills in my job                                                                               609 non-null    object \n",
+      " 38  WorkUnitViews. Topic:21. I was able to use the full range of my abilities in my job. ; Category:Level of Agreement; Question:YOUR VIEWS ABOUT YOUR WORK UNIT]  608 non-null    object \n",
+      " 39  WorkUnitViews. Topic:22. I was able to use the full range of my knowledge in my job                                                                            608 non-null    object \n",
+      " 40  WorkUnitViews. Topic:23. My job provided sufficient variety                                                                                                    611 non-null    object \n",
+      " 41  WorkUnitViews. Topic:24. I was able to cope with the level of stress and pressure in my job                                                                    610 non-null    object \n",
+      " 42  WorkUnitViews. Topic:25. My job allowed me to balance the demands of work and family to my satisfaction                                                        611 non-null    object \n",
+      " 43  WorkUnitViews. Topic:26. My supervisor gave me adequate personal recognition and feedback on my performance                                                    606 non-null    object \n",
+      " 44  WorkUnitViews. Topic:27. My working environment was satisfactory e.g. sufficient space, good lighting, suitable seating and working area                       610 non-null    object \n",
+      " 45  WorkUnitViews. Topic:28. I was given the opportunity to mentor and coach others in order for me to pass on my skills and knowledge prior to my cessation date  609 non-null    object \n",
+      " 46  WorkUnitViews. Topic:29. There was adequate communication between staff in my unit                                                                             603 non-null    object \n",
+      " 47  WorkUnitViews. Topic:30. Staff morale was positive within my work unit                                                                                         606 non-null    object \n",
+      " 48  Induction. Did you undertake Workplace Induction?                                                                                                              619 non-null    object \n",
+      " 49  InductionInfo. Topic:Did you undertake a Corporate Induction?                                                                                                  432 non-null    object \n",
+      " 50  InductionInfo. Topic:Did you undertake a Institute Induction?                                                                                                  483 non-null    object \n",
+      " 51  InductionInfo. Topic: Did you undertake Team Induction?                                                                                                        440 non-null    object \n",
+      " 52  InductionInfo. Face to Face Topic:Did you undertake a Corporate Induction; Category:How it was conducted?                                                      555 non-null    object \n",
+      " 53  InductionInfo. On-line Topic:Did you undertake a Corporate Induction; Category:How it was conducted?                                                           555 non-null    object \n",
+      " 54  InductionInfo. Induction Manual Topic:Did you undertake a Corporate Induction?                                                                                 555 non-null    object \n",
+      " 55  InductionInfo. Face to Face Topic:Did you undertake a Institute Induction?                                                                                     530 non-null    object \n",
+      " 56  InductionInfo. On-line Topic:Did you undertake a Institute Induction?                                                                                          555 non-null    object \n",
+      " 57  InductionInfo. Induction Manual Topic:Did you undertake a Institute Induction?                                                                                 553 non-null    object \n",
+      " 58  InductionInfo. Face to Face Topic: Did you undertake Team Induction; Category?                                                                                 555 non-null    object \n",
+      " 59  InductionInfo. On-line Topic: Did you undertake Team Induction?process you undertook and how it was conducted.]                                                555 non-null    object \n",
+      " 60  InductionInfo. Induction Manual Topic: Did you undertake Team Induction?                                                                                       555 non-null    object \n",
+      " 61  Workplace. Topic:Did you and your Manager develop a Performance and Professional Development Plan (PPDP)?                                                      608 non-null    object \n",
+      " 62  Workplace. Topic:Does your workplace promote a work culture free from all forms of unlawful discrimination?                                                    594 non-null    object \n",
+      " 63  Workplace. Topic:Does your workplace promote and practice the principles of employment equity?                                                                 587 non-null    object \n",
+      " 64  Workplace. Topic:Does your workplace value the diversity of its employees?                                                                                     586 non-null    object \n",
+      " 65  Workplace. Topic:Would you recommend the Institute as an employer to others?                                                                                   581 non-null    object \n",
+      " 66  Gender. What is your Gender?                                                                                                                                   596 non-null    object \n",
+      " 67  CurrentAge. Current Age                                                                                                                                        596 non-null    object \n",
+      " 68  Employment Type. Employment Type                                                                                                                               596 non-null    object \n",
+      " 69  Classification. Classification                                                                                                                                 596 non-null    object \n",
+      " 70  LengthofServiceOverall. Overall Length of Service at Institute (in years)                                                                                      596 non-null    object \n",
+      " 71  LengthofServiceCurrent. Length of Service at current workplace (in years)                                                                                      596 non-null    object \n",
+      "dtypes: float64(2), object(70)\n",
+      "memory usage: 395.0+ KB\n",
+      "None\n",
+      "      Record ID                              Institute  \\\n",
+      "0  6.341330e+17  Southern Queensland Institute of TAFE   \n",
+      "1  6.341337e+17            Mount Isa Institute of TAFE   \n",
+      "2  6.341388e+17            Mount Isa Institute of TAFE   \n",
+      "3  6.341399e+17            Mount Isa Institute of TAFE   \n",
+      "4  6.341466e+17  Southern Queensland Institute of TAFE   \n",
+      "\n",
+      "                   WorkArea  CESSATION YEAR Reason for ceasing employment  \\\n",
+      "0  Non-Delivery (corporate)          2010.0              Contract Expired   \n",
+      "1  Non-Delivery (corporate)          2010.0                    Retirement   \n",
+      "2       Delivery (teaching)          2010.0                    Retirement   \n",
+      "3  Non-Delivery (corporate)          2010.0                   Resignation   \n",
+      "4       Delivery (teaching)          2010.0                   Resignation   \n",
+      "\n",
+      "  Contributing Factors. Career Move - Public Sector   \\\n",
+      "0                                                NaN   \n",
+      "1                                                  -   \n",
+      "2                                                  -   \n",
+      "3                                                  -   \n",
+      "4                                                  -   \n",
+      "\n",
+      "  Contributing Factors. Career Move - Private Sector   \\\n",
+      "0                                                NaN    \n",
+      "1                                                  -    \n",
+      "2                                                  -    \n",
+      "3                                                  -    \n",
+      "4                       Career Move - Private Sector    \n",
+      "\n",
+      "  Contributing Factors. Career Move - Self-employment  \\\n",
+      "0                                                NaN    \n",
+      "1                                                  -    \n",
+      "2                                                  -    \n",
+      "3                                                  -    \n",
+      "4                                                  -    \n",
+      "\n",
+      "  Contributing Factors. Ill Health Contributing Factors. Maternity/Family  \\\n",
+      "0                              NaN                                    NaN   \n",
+      "1                                -                                      -   \n",
+      "2                                -                                      -   \n",
+      "3                                -                                      -   \n",
+      "4                                -                                      -   \n",
+      "\n",
+      "   ...  \\\n",
+      "0  ...   \n",
+      "1  ...   \n",
+      "2  ...   \n",
+      "3  ...   \n",
+      "4  ...   \n",
+      "\n",
+      "  Workplace. Topic:Does your workplace promote a work culture free from all forms of unlawful discrimination?  \\\n",
+      "0                                                Yes                                                            \n",
+      "1                                                Yes                                                            \n",
+      "2                                                Yes                                                            \n",
+      "3                                                Yes                                                            \n",
+      "4                                                Yes                                                            \n",
+      "\n",
+      "  Workplace. Topic:Does your workplace promote and practice the principles of employment equity?  \\\n",
+      "0                                                Yes                                               \n",
+      "1                                                Yes                                               \n",
+      "2                                                Yes                                               \n",
+      "3                                                Yes                                               \n",
+      "4                                                Yes                                               \n",
+      "\n",
+      "  Workplace. Topic:Does your workplace value the diversity of its employees?  \\\n",
+      "0                                                Yes                           \n",
+      "1                                                Yes                           \n",
+      "2                                                Yes                           \n",
+      "3                                                Yes                           \n",
+      "4                                                Yes                           \n",
+      "\n",
+      "  Workplace. Topic:Would you recommend the Institute as an employer to others?  \\\n",
+      "0                                                Yes                             \n",
+      "1                                                Yes                             \n",
+      "2                                                Yes                             \n",
+      "3                                                Yes                             \n",
+      "4                                                Yes                             \n",
+      "\n",
+      "  Gender. What is your Gender? CurrentAge. Current Age  \\\n",
+      "0                       Female                  26  30   \n",
+      "1                          NaN                     NaN   \n",
+      "2                          NaN                     NaN   \n",
+      "3                          NaN                     NaN   \n",
+      "4                         Male                  41  45   \n",
+      "\n",
+      "  Employment Type. Employment Type Classification. Classification  \\\n",
+      "0              Temporary Full-time            Administration (AO)   \n",
+      "1                              NaN                            NaN   \n",
+      "2                              NaN                            NaN   \n",
+      "3                              NaN                            NaN   \n",
+      "4              Permanent Full-time        Teacher (including LVT)   \n",
+      "\n",
+      "  LengthofServiceOverall. Overall Length of Service at Institute (in years)  \\\n",
+      "0                                                1-2                          \n",
+      "1                                                NaN                          \n",
+      "2                                                NaN                          \n",
+      "3                                                NaN                          \n",
+      "4                                                3-4                          \n",
+      "\n",
+      "  LengthofServiceCurrent. Length of Service at current workplace (in years)  \n",
+      "0                                                1-2                         \n",
+      "1                                                NaN                         \n",
+      "2                                                NaN                         \n",
+      "3                                                NaN                         \n",
+      "4                                                3-4                         \n",
+      "\n",
+      "[5 rows x 72 columns]\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Exploring the TAFE dataset\n",
+    "print(\"TAFE Survey dataset:\\n\")\n",
+    "print(tafe_survey.info())\n",
+    "print(tafe_survey.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The column names in the TAFE dataset will need to be cleaned as they contain a description of the column in the column name, which will be very cumbersome to work with as we wrangle this dataset. We will clean the column names first, and then note other observations about the dataset. In addition, there are a lot of values that are '-' instead of NaN, and these will have to be converted to NaN before we can move forward with the data cleaning process"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 822 entries, 0 to 821\n",
+      "Data columns (total 35 columns):\n",
+      " #   Column                               Non-Null Count  Dtype  \n",
+      "---  ------                               --------------  -----  \n",
+      " 0   ID                                   822 non-null    int64  \n",
+      " 1   SeparationType                       822 non-null    object \n",
+      " 2   Cease Date                           788 non-null    object \n",
+      " 3   DETE Start Date                      749 non-null    float64\n",
+      " 4   Role Start Date                      724 non-null    float64\n",
+      " 5   Position                             817 non-null    object \n",
+      " 6   Classification                       455 non-null    object \n",
+      " 7   Region                               717 non-null    object \n",
+      " 8   Business Unit                        126 non-null    object \n",
+      " 9   Employment Status                    817 non-null    object \n",
+      " 10  Career move to public sector         822 non-null    bool   \n",
+      " 11  Career move to private sector        822 non-null    bool   \n",
+      " 12  Interpersonal conflicts              822 non-null    bool   \n",
+      " 13  Job dissatisfaction                  822 non-null    bool   \n",
+      " 14  Dissatisfaction with the department  822 non-null    bool   \n",
+      " 15  Physical work environment            822 non-null    bool   \n",
+      " 16  Lack of recognition                  822 non-null    bool   \n",
+      " 17  Lack of job security                 822 non-null    bool   \n",
+      " 18  Work location                        822 non-null    bool   \n",
+      " 19  Employment conditions                822 non-null    bool   \n",
+      " 20  Maternity/family                     822 non-null    bool   \n",
+      " 21  Relocation                           822 non-null    bool   \n",
+      " 22  Study/Travel                         822 non-null    bool   \n",
+      " 23  Ill Health                           822 non-null    bool   \n",
+      " 24  Traumatic incident                   822 non-null    bool   \n",
+      " 25  Work life balance                    822 non-null    bool   \n",
+      " 26  Workload                             822 non-null    bool   \n",
+      " 27  None of the above                    822 non-null    bool   \n",
+      " 28  Gender                               798 non-null    object \n",
+      " 29  Age                                  811 non-null    object \n",
+      " 30  Aboriginal                           16 non-null     object \n",
+      " 31  Torres Strait                        3 non-null      object \n",
+      " 32  South Sea                            7 non-null      object \n",
+      " 33  Disability                           23 non-null     object \n",
+      " 34  NESB                                 32 non-null     object \n",
+      "dtypes: bool(18), float64(2), int64(1), object(14)\n",
+      "memory usage: 123.7+ KB\n",
+      "None\n",
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 702 entries, 0 to 701\n",
+      "Data columns (total 23 columns):\n",
+      " #   Column                                                                     Non-Null Count  Dtype  \n",
+      "---  ------                                                                     --------------  -----  \n",
+      " 0   Record ID                                                                  702 non-null    float64\n",
+      " 1   Institute                                                                  702 non-null    object \n",
+      " 2   WorkArea                                                                   702 non-null    object \n",
+      " 3   CESSATION YEAR                                                             695 non-null    float64\n",
+      " 4   Reason for ceasing employment                                              701 non-null    object \n",
+      " 5   Contributing Factors. Career Move - Public Sector                          437 non-null    object \n",
+      " 6   Contributing Factors. Career Move - Private Sector                         437 non-null    object \n",
+      " 7   Contributing Factors. Career Move - Self-employment                        437 non-null    object \n",
+      " 8   Contributing Factors. Ill Health                                           437 non-null    object \n",
+      " 9   Contributing Factors. Maternity/Family                                     437 non-null    object \n",
+      " 10  Contributing Factors. Dissatisfaction                                      437 non-null    object \n",
+      " 11  Contributing Factors. Job Dissatisfaction                                  437 non-null    object \n",
+      " 12  Contributing Factors. Interpersonal Conflict                               437 non-null    object \n",
+      " 13  Contributing Factors. Study                                                437 non-null    object \n",
+      " 14  Contributing Factors. Travel                                               437 non-null    object \n",
+      " 15  Contributing Factors. Other                                                437 non-null    object \n",
+      " 16  Contributing Factors. NONE                                                 437 non-null    object \n",
+      " 17  Gender. What is your Gender?                                               596 non-null    object \n",
+      " 18  CurrentAge. Current Age                                                    596 non-null    object \n",
+      " 19  Employment Type. Employment Type                                           596 non-null    object \n",
+      " 20  Classification. Classification                                             596 non-null    object \n",
+      " 21  LengthofServiceOverall. Overall Length of Service at Institute (in years)  596 non-null    object \n",
+      " 22  LengthofServiceCurrent. Length of Service at current workplace (in years)  596 non-null    object \n",
+      "dtypes: float64(2), object(21)\n",
+      "memory usage: 126.3+ KB\n",
+      "None\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Read the 'Not Stated' values in dete_survey.csv as NaN\n",
+    "dete_survey = pd.read_csv('dete_survey.csv', na_values = 'Not Stated')\n",
+    "\n",
+    "#Drop columns that aren't needed for our analysis in both datasets\n",
+    "dete_survey_updated = dete_survey.drop(dete_survey.columns[28:49], axis = 1)\n",
+    "tafe_survey_updated = tafe_survey.drop(tafe_survey.columns[17:66], axis = 1)\n",
+    "\n",
+    "print(dete_survey_updated.info())\n",
+    "print(tafe_survey_updated.info())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We removed some of the columns in the datasets because they were irrelevant to the questions we are trying to answer.  We are trying to determine if a correlation exists between how long employees who resigned worked at the company and if a correlation exists between employee dissatisfaction and the age of the employee. The columns we removed wouldn't provide any insight into the questions we are trying to answer"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The TAFE and DETE datasets have a lot of columns that represent the same data, but have different names, so we will have to rename these columns. For example, 'Age' in DETE and 'CurrentAge. Current Age' in TAFE represent the age of the employee, but have different column names, so we will change the column name in the TAFE dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Index(['id', 'separationtype', 'cease_date', 'dete_start_date',\n",
+      "       'role_start_date', 'position', 'classification', 'region',\n",
+      "       'business_unit', 'employment_status', 'career_move_to_public_sector',\n",
+      "       'career_move_to_private_sector', 'interpersonal_conflicts',\n",
+      "       'job_dissatisfaction', 'dissatisfaction_with_the_department',\n",
+      "       'physical_work_environment', 'lack_of_recognition',\n",
+      "       'lack_of_job_security', 'work_location', 'employment_conditions',\n",
+      "       'maternity/family', 'relocation', 'study/travel', 'ill_health',\n",
+      "       'traumatic_incident', 'work_life_balance', 'workload',\n",
+      "       'none_of_the_above', 'gender', 'age', 'aboriginal', 'torres_strait',\n",
+      "       'south_sea', 'disability', 'nesb'],\n",
+      "      dtype='object')\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Make column names lowercase, remove trailing whitespace, replace spaces with underscores\n",
+    "dete_survey_updated.columns = dete_survey_updated.columns.str.lower().str.replace(' ', '_').str.rstrip()\n",
+    "print(dete_survey_updated.columns)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Index(['id', 'Institute', 'WorkArea', 'cease_date', 'separationtype',\n",
+      "       'Contributing Factors. Career Move - Public Sector ',\n",
+      "       'Contributing Factors. Career Move - Private Sector ',\n",
+      "       'Contributing Factors. Career Move - Self-employment',\n",
+      "       'Contributing Factors. Ill Health',\n",
+      "       'Contributing Factors. Maternity/Family',\n",
+      "       'Contributing Factors. Dissatisfaction',\n",
+      "       'Contributing Factors. Job Dissatisfaction',\n",
+      "       'Contributing Factors. Interpersonal Conflict',\n",
+      "       'Contributing Factors. Study', 'Contributing Factors. Travel',\n",
+      "       'Contributing Factors. Other', 'Contributing Factors. NONE',\n",
+      "       'Gender. What is your Gender?', 'age', 'employment_status', 'position',\n",
+      "       'institute_service', 'role_service'],\n",
+      "      dtype='object')\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Rename certain columns in TEFE dataset\n",
+    "tafe_survey_updated.rename(columns = {'Record ID': 'id', 'CESSATION YEAR':'cease_date', 'Reason for ceasing employment':'separationtype', 'Gender. What is your gender?':'gender', 'CurrentAge. Current Age':'age', 'Employment Type. Employment Type':'employment_status', 'Classification. Classification':'position', 'LengthofServiceOverall. Overall Length of Service at Institute (in years)':'institute_service', 'LengthofServiceCurrent. Length of Service at current workplace (in years)':'role_service'}, inplace = True)\n",
+    "\n",
+    "print(tafe_survey_updated.columns)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Since we're trying to perform analysis only on employees that have resigned, we're only going to look at the data points where the 'separationtype' contains the string 'Resignation'. We will remove all rows where the 'separationtype' != 'Resignation'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "DETE Survey Value Counts:\n",
+      "\n",
+      " Age Retirement                          285\n",
+      "Resignation-Other reasons               150\n",
+      "Resignation-Other employer               91\n",
+      "Resignation-Move overseas/interstate     70\n",
+      "Voluntary Early Retirement (VER)         67\n",
+      "Ill Health Retirement                    61\n",
+      "Other                                    49\n",
+      "Contract Expired                         34\n",
+      "Termination                              15\n",
+      "Name: separationtype, dtype: int64\n",
+      "\n",
+      "TAFE Survey Value Counts:\n",
+      "\n",
+      " Resignation                 340\n",
+      "Contract Expired            127\n",
+      "Retrenchment/ Redundancy    104\n",
+      "Retirement                   82\n",
+      "Transfer                     25\n",
+      "Termination                  23\n",
+      "Name: separationtype, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"DETE Survey Value Counts:\")\n",
+    "print('\\n', dete_survey_updated['separationtype'].value_counts())\n",
+    "print('\\nTAFE Survey Value Counts:')\n",
+    "print('\\n', tafe_survey_updated['separationtype'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the TAFE survey dataset, we will remove all of the rows in which the 'separationtype' isn't 'Resignation'. In the DETE survey dataset, we will remove all the rows in which the 'separationtype' isn't 'Resignation-Other reasons', 'Resignation-Other employer', or 'Resignation-Move overseas/interstate'."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dete_resignations = dete_survey_updated[(dete_survey_updated['separationtype'] == 'Resignation-Other reasons') | (dete_survey_updated['separationtype'] == 'Resignation-Other employer') | (dete_survey_updated['separationtype'] == 'Resignation-Move overseas/interstate')]\n",
+    "tafe_resignations = tafe_survey_updated[tafe_survey_updated['separationtype'] == 'Resignation']"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We will now begin checking each dataset for inconsistencies. We will start by analyzing the columns that contain dates."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2012       126\n",
+      "2013        74\n",
+      "01/2014     22\n",
+      "12/2013     17\n",
+      "06/2013     14\n",
+      "09/2013     11\n",
+      "07/2013      9\n",
+      "11/2013      9\n",
+      "10/2013      6\n",
+      "08/2013      4\n",
+      "05/2012      2\n",
+      "05/2013      2\n",
+      "09/2010      1\n",
+      "07/2006      1\n",
+      "07/2012      1\n",
+      "2010         1\n",
+      "Name: cease_date, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(dete_resignations['cease_date'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The 'cease_date' column in the dete_resignations is very inconsistent. We really only care about the year, so we will remove the month and '/' from all of those rows of the dataset. We will then convert the column to a float datatype"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2013.0    146\n",
+      "2012.0    129\n",
+      "2014.0     22\n",
+      "2010.0      2\n",
+      "2006.0      1\n",
+      "Name: cease_date, dtype: int64\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-30-21c7e0e1f030>:1: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  dete_resignations['cease_date'] = dete_resignations['cease_date'].str.split('/').str.get(-1).astype(float)\n"
+     ]
+    }
+   ],
+   "source": [
+    "dete_resignations['cease_date'] = dete_resignations['cease_date'].str.split('/').str.get(-1).astype(float)\n",
+    "print(dete_resignations['cease_date'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2009.0      2\n",
+      "2010.0     68\n",
+      "2011.0    116\n",
+      "2012.0     94\n",
+      "2013.0     55\n",
+      "Name: cease_date, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(tafe_resignations['cease_date'].value_counts().sort_index())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The 'cease_date' column in the tafe_resignations dataset doesn't need to be cleaned"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the tafe_resignations dataset, there is a column 'institute_service' that represents the amount of years that a certain employee worked at a company. The defe_resignations dataset doesn't have this column, but we can subtract the 'dete_start_date' column from the 'cease_date' column to get the number of years the employee worked at the company"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "3      7.0\n",
+      "5     18.0\n",
+      "8      3.0\n",
+      "9     15.0\n",
+      "11     3.0\n",
+      "Name: institute_service, dtype: float64\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-32-4beb3cb173bc>:1: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  dete_resignations['institute_service'] = dete_resignations['cease_date'] - dete_resignations['dete_start_date']\n"
+     ]
+    }
+   ],
+   "source": [
+    "dete_resignations['institute_service'] = dete_resignations['cease_date'] - dete_resignations['dete_start_date']\n",
+    "print(dete_resignations['institute_service'].head())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "-                                         277\n",
+      "Contributing Factors. Dissatisfaction      55\n",
+      "Name: Contributing Factors. Dissatisfaction, dtype: int64\n",
+      "\n",
+      " -                      270\n",
+      "Job Dissatisfaction     62\n",
+      "Name: Contributing Factors. Job Dissatisfaction, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(tafe_resignations['Contributing Factors. Dissatisfaction'].value_counts())\n",
+    "print('\\n', tafe_resignations['Contributing Factors. Job Dissatisfaction'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/dataquest/system/env/python3/lib/python3.8/site-packages/pandas/core/frame.py:2963: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  self[k1] = value[k2]\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Convert values in these columns to either True, False, or NaN\n",
+    "def update_vals(val):\n",
+    "    if val == 'NaN':\n",
+    "        return np.nan\n",
+    "    if val == '-':\n",
+    "        return False\n",
+    "    else:\n",
+    "        return True\n",
+    "\n",
+    "tafe_resignations[['Contributing Factors. Dissatisfaction', 'Contributing Factors. Job Dissatisfaction']] = tafe_resignations[['Contributing Factors. Dissatisfaction', 'Contributing Factors. Job Dissatisfaction']].applymap(update_vals)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-35-887d7319cc2a>:1: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  tafe_resignations['dissatisfied'] = tafe_resignations[['Contributing Factors. Dissatisfaction', 'Contributing Factors. Job Dissatisfaction']].any(axis = 1, skipna = False)\n",
+      "<ipython-input-35-887d7319cc2a>:2: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  dete_resignations['dissatisfied'] = dete_resignations.iloc[:,np.r_[12:20, 26]].any(axis = 1, skipna = False)\n"
+     ]
+    }
+   ],
+   "source": [
+    "tafe_resignations['dissatisfied'] = tafe_resignations[['Contributing Factors. Dissatisfaction', 'Contributing Factors. Job Dissatisfaction']].any(axis = 1, skipna = False)\n",
+    "dete_resignations['dissatisfied'] = dete_resignations.iloc[:,np.r_[12:20, 26]].any(axis = 1, skipna = False)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We just created a 'dissatisfied' column in both of the datasets that is set to True if the employee left because of dissatisfaction, and False if not. We will now combine the two datasets"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-36-6ee97932b280>:2: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  dete_resignations['institute'] = 'DETE'\n",
+      "<ipython-input-36-6ee97932b280>:3: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  tafe_resignations['institute'] = 'TAFE'\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Add an 'institute' column to each of the datasets\n",
+    "dete_resignations['institute'] = 'DETE'\n",
+    "tafe_resignations['institute'] = 'TAFE'\n",
+    "\n",
+    "#Combine datasets\n",
+    "combined = pd.concat([dete_resignations, tafe_resignations], ignore_index = True)\n",
+    "\n",
+    "#Remove columns that has less than 500 non-null values\n",
+    "combined_updated = combined.dropna(thresh = 500, axis = 1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We will now begin to perform analysis on the dataset. We will divide the 'institute_service' column into ranges of years that each employee worked at the company for."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Less than 1 year      73\n",
+      "1-2                   64\n",
+      "3-4                   63\n",
+      "5-6                   33\n",
+      "11-20                 24\n",
+      "5.0                   23\n",
+      "nan                   22\n",
+      "7-10                  21\n",
+      "1.0                   21\n",
+      "3.0                   20\n",
+      "0.0                   19\n",
+      "6.0                   17\n",
+      "4.0                   16\n",
+      "9.0                   14\n",
+      "2.0                   14\n",
+      "7.0                   13\n",
+      "More than 20 years    10\n",
+      "8.0                    7\n",
+      "13.0                   7\n",
+      "20.0                   7\n",
+      "15.0                   7\n",
+      "22.0                   6\n",
+      "17.0                   6\n",
+      "12.0                   6\n",
+      "10.0                   6\n",
+      "14.0                   6\n",
+      "18.0                   5\n",
+      "16.0                   5\n",
+      "11.0                   4\n",
+      "23.0                   4\n",
+      "24.0                   4\n",
+      "19.0                   3\n",
+      "39.0                   3\n",
+      "32.0                   3\n",
+      "21.0                   3\n",
+      "26.0                   2\n",
+      "25.0                   2\n",
+      "28.0                   2\n",
+      "30.0                   2\n",
+      "31.0                   1\n",
+      "34.0                   1\n",
+      "29.0                   1\n",
+      "36.0                   1\n",
+      "35.0                   1\n",
+      "27.0                   1\n",
+      "33.0                   1\n",
+      "49.0                   1\n",
+      "42.0                   1\n",
+      "38.0                   1\n",
+      "41.0                   1\n",
+      "Name: institute_service, dtype: int64\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-38-6fb34f6fb6f9>:1: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  combined_updated['institute_service'] = combined_updated['institute_service'].astype(str)\n",
+      "<ipython-input-38-6fb34f6fb6f9>:2: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  combined_updated.dropna(inplace = True)\n"
+     ]
+    }
+   ],
+   "source": [
+    "combined_updated['institute_service'] = combined_updated['institute_service'].astype(str)\n",
+    "combined_updated.dropna(inplace = True)\n",
+    "print(combined_updated['institute_service'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "New            191\n",
+      "Experience     172\n",
+      "Veteran        154\n",
+      "Established     61\n",
+      "Name: service_cat, dtype: int64\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-39-fd2d7d13e4fd>:1: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  combined_updated['institute_service'] = combined_updated['institute_service'].str.replace('Less than 1 year', '1.0').str.replace('1-2', '2.0').str.replace('3-4', '4').str.replace('5-6', '5.0').str.replace('11-20', '11.0').str.replace('7-10', '8.0').str.replace('More than 20 years', '25.0')\n",
+      "<ipython-input-39-fd2d7d13e4fd>:2: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  combined_updated['institute_service'] = combined_updated['institute_service'].astype(float)\n",
+      "<ipython-input-39-fd2d7d13e4fd>:14: SettingWithCopyWarning: \n",
+      "A value is trying to be set on a copy of a slice from a DataFrame.\n",
+      "Try using .loc[row_indexer,col_indexer] = value instead\n",
+      "\n",
+      "See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n",
+      "  combined_updated['service_cat'] = combined_updated['institute_service'].apply(career_stage)\n"
+     ]
+    }
+   ],
+   "source": [
+    "combined_updated['institute_service'] = combined_updated['institute_service'].str.replace('Less than 1 year', '1.0').str.replace('1-2', '2.0').str.replace('3-4', '4').str.replace('5-6', '5.0').str.replace('11-20', '11.0').str.replace('7-10', '8.0').str.replace('More than 20 years', '25.0')\n",
+    "combined_updated['institute_service'] = combined_updated['institute_service'].astype(float)\n",
+    "\n",
+    "def career_stage(val):\n",
+    "    if (val >= 0) & (val < 3):\n",
+    "        return 'New'\n",
+    "    elif (val >= 3) & (val <= 6):\n",
+    "        return 'Experience'\n",
+    "    elif (val > 6) & (val <= 10):\n",
+    "        return 'Established'\n",
+    "    else:\n",
+    "        return 'Veteran'\n",
+    "    \n",
+    "combined_updated['service_cat'] = combined_updated['institute_service'].apply(career_stage)\n",
+    "print(combined_updated['service_cat'].value_counts())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "False    391\n",
+      "True     187\n",
+      "Name: dissatisfied, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(combined_updated['dissatisfied'].value_counts(dropna = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "             dissatisfied\n",
+      "service_cat              \n",
+      "Established      0.475410\n",
+      "Experience       0.296512\n",
+      "New              0.256545\n",
+      "Veteran          0.376623\n"
+     ]
+    }
+   ],
+   "source": [
+    "dissatisfied_resignations = combined_updated.pivot_table(values = 'dissatisfied', index = 'service_cat')\n",
+    "print(dissatisfied_resignations)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<matplotlib.axes._subplots.AxesSubplot at 0x7f29661f3e80>"
+      ]
+     },
+     "execution_count": 45,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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xETdd9995u3h4eGaMWMGlz/mI4Pad3WBy/VYWVnphx9+uMFpUJM++eQTzZ07V4sWLVJQUJDRcQD8Hy1bttTatWt15513ytXVVYcOHVJAQIBOnDihzp07Kzc31+iIhmKGwABXF7jg5hMREaH8/HyFhITIzs6uzFqC7Oxsg5IB4GqH10YhqEOuTtbwg1l/xcXFGR0BQAWuXu3w6llDudphaRSCOmDZsmWaP3++vv/+e0lSYGCgXnjhBc5SWA+NHj3a6AgA/uDbb79VUFCQYmJidN999+no0aPms8RytcPfcZSBwaKjozVhwgQNGjRI69at07p16zRo0CBNnDhR0dHRRsdDFaSmpmratGkaOXKkzp49K0n6/PPPdeTIEYOTAbemjh07qlu3bjp69Kh2796toqIidezYkasd/gGLCg3WpEkTLViwQCNHjiy1ffXq1Ro/frzOnTtnUDJUxY4dOzRw4ED16NFDO3fu1LFjxxQQEKDZs2dr//79Wr9+vdERgVvOl19+qffff1/r169XSUmJHn74YY0ZM0a9e/c2OlqdwgyBwS5fvqywsLAy27t06aKioiIDEqE6pkyZopkzZ2rr1q2ys7Mzb7/77rv11VdfGZgMuHX16tVLy5cvV0ZGhhYuXKi0tDT17dtXt912m+bMmaPMzEyjI9YJFAKDPfHEE1q0aFGZ7e+9955GjRplQCJUx+HDhzVkyJAy2728vJjtAQzm7OysyMhI7dixQ999952GDRumd999Vy1atOC6MWJRoSGioqLM/7aystLSpUu1ZcsW3XnnnZKkvXv3Kj09XREREUZFRBV5eHgoIyOjzLkmkpOT5evra1AqAH/Upk0b/e1vf1PLli01depUffrpp0ZHMhyFwAB/vMTm1cUsqampkqTGjRurcePGLEKrh0aMGKGXXnpJ69atk5WVlUpKSrR7925NmjSJggfUETt37tTy5cu1YcMGWVtb69FHH9WYMWOMjmU4FhUCNaiwsFDPPfecVqxYoeLiYjVo0EDFxcV67LHHtGLFilKXXQVQe06fPq0VK1ZoxYoVOnHihO666y6NGTNGjz76qJydnY2OVydQCIAbID09Xd9++60uXbqkTp06cW0DwEADBw7Utm3b1LhxY0VEROipp55S27ZtjY5V5/CRQR2wf/9+/etf/1J6eroKCwtL3bdx40aDUqE6WrRoIT8/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ld4fwBXMEAD1SEhIiPr376/g4GANGDBA9957rx555BHZ2dkpNTVVY8aMKfWXcVFRkdzd3Us9RlhYWKmv77//ftna2urjjz/WiBEjtGHDBrm5uSk8PLzcDCkpKerVq5dsbW3L3JeXl1fpHBU9dqdOndSwYcNy77906ZJmzJihTz/9VBkZGSoqKtKvv/6q9PT06z42gGujEAD1iI2NjbZu3ao9e/Zoy5YtWrhwoV5++WV98sknkqQlS5aoW7duZfb5v65eQOsqOzs7PfLII1q1apVGjBihVatWafjw4RUuInR0dKww36VLlyqdw9LHlqRJkyZp69ateuutt9SmTRs5OjrqkUceUWFh4XUfG8C1UQiAesbKyko9evRQjx49FB0drZYtW2r37t1q1qyZfvjhB40aNcrixxw1apTuueceHTlyRNu3b9fMmTMrHNuxY0d98MEHunz5cplZAm9v72rl6Nixo5YuXars7OxyZwl2796tJ598UkOGDJF0pYCkpaWVGmNnZ6fi4mKLnxu41XGUAVCP7N27V7NmzdL+/fuVnp6ujRs3KisrS+3bt9err76qmJgYLViwQN99950OHz6s999/X7Gxsdd93N69e8vHx0ejRo1Sq1atyvx1/3+NGzdOubm5GjFihPbv36/vv/9eH330kY4fPy5J1coxcuRI+fj4aPDgwdq9e7d++OEHbdiwQUlJSZKkwMBAbdy4USkpKTp06JAee+wx84LDq/z9/bVz5079/PPPOnfu3HWfE8D/Z/QiBgCVd/ToUdOAAQNMTZo0Mdnb25tuu+22UgvqVq5caQoNDTXZ2dmZPD09Tb179zZt3LjRZDKVXRz4R3/9619NkkzR0dGltpe336FDh0z33nuvycnJyeTq6mrq1auXKTU1tVI5rictLc308MMPm9zc3ExOTk6msLAw0969e81Z+vXrZ3J0dDT5+fmZ3nnnHVOfPn1MEyZMMO+flJRk6tixo8ne3t7E/+KAyuPyxwAAgI8MAAAAhQBALZo1a5ZcXFzKvf3fEyMBqH18ZACg1mRnZys7O7vc+xwdHeXr61vLiQBcRSEAAAB8ZAAAACgEAABAFAIAACAKAQAAEIUAAACIQgAAAEQhAAAAohAAAABJ/w9MgY1BmPrpswAAAABJRU5ErkJggg==\n",
+      "text/plain": [
+       "<Figure size 600x400 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "dissatisfied_resignations.plot(kind = 'bar')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Of the people who resigned because of dissatisfaction with their job, the least common experience level was 'New' (less than 3 years).  The most common experience levels were 'Veteran' or 'Established', representing ~85% of all people who resigned due to dissatisfaction. This means that 85% of all people who resigned due to dissatisfaction had worked at these companies for more than 7 years. This is indicative that the company doesn't treat their long-time employees well enough to keep them satisfied with their job. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.2"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
