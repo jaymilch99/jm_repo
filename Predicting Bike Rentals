@@ -1,0 +1,1218 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true
+   },
+   "source": [
+    "# Predicting Bike Rentals"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We will be exploring a dataset on communal bike sharing stations in Washington DC. DC collects detailed data on the number of bicycles people rent by the hour and the day. The dataset contains 17379 rows, with each row representing the number of bike rentals for a single hour of a single day. The goal of this project is to use the random forest regression algorithm to try to predict how many bikes will be rented in an hour given certain inputs like time of day, weather, day of the week, etc. We will compare the results of the random forest algorithm to the results of performing linear regression."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>instant</th>\n",
+       "      <th>dteday</th>\n",
+       "      <th>season</th>\n",
+       "      <th>yr</th>\n",
+       "      <th>mnth</th>\n",
+       "      <th>hr</th>\n",
+       "      <th>holiday</th>\n",
+       "      <th>weekday</th>\n",
+       "      <th>workingday</th>\n",
+       "      <th>weathersit</th>\n",
+       "      <th>temp</th>\n",
+       "      <th>atemp</th>\n",
+       "      <th>hum</th>\n",
+       "      <th>windspeed</th>\n",
+       "      <th>casual</th>\n",
+       "      <th>registered</th>\n",
+       "      <th>cnt</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1</td>\n",
+       "      <td>2011-01-01</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.81</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>13</td>\n",
+       "      <td>16</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>2</td>\n",
+       "      <td>2011-01-01</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>8</td>\n",
+       "      <td>32</td>\n",
+       "      <td>40</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>3</td>\n",
+       "      <td>2011-01-01</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>27</td>\n",
+       "      <td>32</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>4</td>\n",
+       "      <td>2011-01-01</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>10</td>\n",
+       "      <td>13</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>5</td>\n",
+       "      <td>2011-01-01</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>4</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   instant      dteday  season  yr  mnth  hr  holiday  weekday  workingday  \\\n",
+       "0        1  2011-01-01       1   0     1   0        0        6           0   \n",
+       "1        2  2011-01-01       1   0     1   1        0        6           0   \n",
+       "2        3  2011-01-01       1   0     1   2        0        6           0   \n",
+       "3        4  2011-01-01       1   0     1   3        0        6           0   \n",
+       "4        5  2011-01-01       1   0     1   4        0        6           0   \n",
+       "\n",
+       "   weathersit  temp   atemp   hum  windspeed  casual  registered  cnt  \n",
+       "0           1  0.24  0.2879  0.81        0.0       3          13   16  \n",
+       "1           1  0.22  0.2727  0.80        0.0       8          32   40  \n",
+       "2           1  0.22  0.2727  0.80        0.0       5          27   32  \n",
+       "3           1  0.24  0.2879  0.75        0.0       3          10   13  \n",
+       "4           1  0.24  0.2879  0.75        0.0       0           1    1  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 17379 entries, 0 to 17378\n",
+      "Data columns (total 17 columns):\n",
+      "instant       17379 non-null int64\n",
+      "dteday        17379 non-null object\n",
+      "season        17379 non-null int64\n",
+      "yr            17379 non-null int64\n",
+      "mnth          17379 non-null int64\n",
+      "hr            17379 non-null int64\n",
+      "holiday       17379 non-null int64\n",
+      "weekday       17379 non-null int64\n",
+      "workingday    17379 non-null int64\n",
+      "weathersit    17379 non-null int64\n",
+      "temp          17379 non-null float64\n",
+      "atemp         17379 non-null float64\n",
+      "hum           17379 non-null float64\n",
+      "windspeed     17379 non-null float64\n",
+      "casual        17379 non-null int64\n",
+      "registered    17379 non-null int64\n",
+      "cnt           17379 non-null int64\n",
+      "dtypes: float64(4), int64(12), object(1)\n",
+      "memory usage: 2.3+ MB\n",
+      "None\n"
+     ]
+    }
+   ],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "from sklearn.metrics import mean_squared_error\n",
+    "from IPython.display import display\n",
+    "\n",
+    "#Import in dataset\n",
+    "bike_rentals = pd.read_csv('bike_rental_hour.csv')\n",
+    "display(bike_rentals.head())\n",
+    "print(bike_rentals.info())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Data Cleaning"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The 'dteday' column is redundant, since we have the year, month and hour. In order to get the day, we will subtract every entry in the 'instant' column by 1, divide by 24, and then take the floor of the result, which will give us the day. Now we will have the year, month, day, and hour as separate columns, allowing us to delete the 'dteday' column. After deleting 'dteday', we will have entirely numeric columns that have 0 null values."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>instant</th>\n",
+       "      <th>season</th>\n",
+       "      <th>yr</th>\n",
+       "      <th>mnth</th>\n",
+       "      <th>hr</th>\n",
+       "      <th>holiday</th>\n",
+       "      <th>weekday</th>\n",
+       "      <th>workingday</th>\n",
+       "      <th>weathersit</th>\n",
+       "      <th>temp</th>\n",
+       "      <th>atemp</th>\n",
+       "      <th>hum</th>\n",
+       "      <th>windspeed</th>\n",
+       "      <th>casual</th>\n",
+       "      <th>registered</th>\n",
+       "      <th>cnt</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.81</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>13</td>\n",
+       "      <td>16</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>8</td>\n",
+       "      <td>32</td>\n",
+       "      <td>40</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>27</td>\n",
+       "      <td>32</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>10</td>\n",
+       "      <td>13</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>4</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   instant  season  yr  mnth  hr  holiday  weekday  workingday  weathersit  \\\n",
+       "0      0.0       1   0     1   0        0        6           0           1   \n",
+       "1      0.0       1   0     1   1        0        6           0           1   \n",
+       "2      0.0       1   0     1   2        0        6           0           1   \n",
+       "3      0.0       1   0     1   3        0        6           0           1   \n",
+       "4      0.0       1   0     1   4        0        6           0           1   \n",
+       "\n",
+       "   temp   atemp   hum  windspeed  casual  registered  cnt  \n",
+       "0  0.24  0.2879  0.81        0.0       3          13   16  \n",
+       "1  0.22  0.2727  0.80        0.0       8          32   40  \n",
+       "2  0.22  0.2727  0.80        0.0       5          27   32  \n",
+       "3  0.24  0.2879  0.75        0.0       3          10   13  \n",
+       "4  0.24  0.2879  0.75        0.0       0           1    1  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "bike_rentals['instant'] -= 1\n",
+    "bike_rentals['instant'] = np.floor(bike_rentals['instant']/24)\n",
+    "bike_rentals.drop(columns = ['dteday'], inplace = True)\n",
+    "display(bike_rentals.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The 'workingday' column is redundant as this information is contained in the 'weekday' column, so we will drop it from our dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "bike_rentals.drop(columns = ['workingday'], inplace = True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Exploring the Dataset"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The 'cnt' column is the total amount of bikes that were rented during the hour, and is our target column that we are trying to predict. We will do some exploratory analysis on this column."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 107,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\ngg==\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7f09f8c40748>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "\n",
+    "#Make a histogram of the 'cnt' column\n",
+    "plt.hist(bike_rentals['cnt'])\n",
+    "plt.xlabel('Number of Bikes Rented in an Hour')\n",
+    "plt.ylabel('Frequency')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "instant       0.278324\n",
+      "season        0.178056\n",
+      "yr            0.250495\n",
+      "mnth          0.120638\n",
+      "hr            0.394071\n",
+      "holiday      -0.030927\n",
+      "weekday       0.026900\n",
+      "weathersit   -0.142426\n",
+      "temp          0.404772\n",
+      "atemp         0.400929\n",
+      "hum          -0.322911\n",
+      "windspeed     0.093234\n",
+      "casual        0.694564\n",
+      "registered    0.972151\n",
+      "cnt           1.000000\n",
+      "Name: cnt, dtype: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Explore how each column of the data is correlated with 'cnt'\n",
+    "correlations = bike_rentals.corr()['cnt']\n",
+    "print(correlations)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "It will make more sense for our learning algorithm to have the time of day that the bikes were rented broken down by morning, midday, evening, and night instead of the specific hour of the day. A time_label of 1 corresponds to morning, 2 = midday, 3 = evening, 4 = night"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 109,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>instant</th>\n",
+       "      <th>season</th>\n",
+       "      <th>yr</th>\n",
+       "      <th>mnth</th>\n",
+       "      <th>holiday</th>\n",
+       "      <th>weekday</th>\n",
+       "      <th>weathersit</th>\n",
+       "      <th>temp</th>\n",
+       "      <th>atemp</th>\n",
+       "      <th>hum</th>\n",
+       "      <th>windspeed</th>\n",
+       "      <th>casual</th>\n",
+       "      <th>registered</th>\n",
+       "      <th>cnt</th>\n",
+       "      <th>time_label</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.81</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>13</td>\n",
+       "      <td>16</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>8</td>\n",
+       "      <td>32</td>\n",
+       "      <td>40</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.22</td>\n",
+       "      <td>0.2727</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>27</td>\n",
+       "      <td>32</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>10</td>\n",
+       "      <td>13</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.24</td>\n",
+       "      <td>0.2879</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   instant  season  yr  mnth  holiday  weekday  weathersit  temp   atemp  \\\n",
+       "0      0.0       1   0     1        0        6           1  0.24  0.2879   \n",
+       "1      0.0       1   0     1        0        6           1  0.22  0.2727   \n",
+       "2      0.0       1   0     1        0        6           1  0.22  0.2727   \n",
+       "3      0.0       1   0     1        0        6           1  0.24  0.2879   \n",
+       "4      0.0       1   0     1        0        6           1  0.24  0.2879   \n",
+       "\n",
+       "    hum  windspeed  casual  registered  cnt  time_label  \n",
+       "0  0.81        0.0       3          13   16           4  \n",
+       "1  0.80        0.0       8          32   40           4  \n",
+       "2  0.80        0.0       5          27   32           4  \n",
+       "3  0.75        0.0       3          10   13           4  \n",
+       "4  0.75        0.0       0           1    1           4  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "def assign_time_label(hour):\n",
+    "    if (hour > 5) & (hour <= 10):\n",
+    "        time_label = 1\n",
+    "    elif (hour > 10) & (hour <= 16):\n",
+    "        time_label = 2\n",
+    "    elif (hour > 16) & (hour <= 21):\n",
+    "        time_label = 3\n",
+    "    else:\n",
+    "        time_label = 4\n",
+    "    return time_label\n",
+    "\n",
+    "bike_rentals['time_label'] = bike_rentals['hr'].apply(assign_time_label)\n",
+    "bike_rentals.drop(columns = ['hr'], inplace = True)\n",
+    "display(bike_rentals.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Preparing Learning Algorithms"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Since we are using a regression algorithm, it makes the most sense to use mean squared error as our error metric."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.metrics import mean_squared_error"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Our training set will have 80% of the bike_rentals dataset and the test set will have 20% of the bike_rentals dataset."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 111,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>instant</th>\n",
+       "      <th>season</th>\n",
+       "      <th>yr</th>\n",
+       "      <th>mnth</th>\n",
+       "      <th>holiday</th>\n",
+       "      <th>weekday</th>\n",
+       "      <th>weathersit</th>\n",
+       "      <th>temp</th>\n",
+       "      <th>atemp</th>\n",
+       "      <th>hum</th>\n",
+       "      <th>windspeed</th>\n",
+       "      <th>casual</th>\n",
+       "      <th>registered</th>\n",
+       "      <th>cnt</th>\n",
+       "      <th>time_label</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>6956</th>\n",
+       "      <td>289.0</td>\n",
+       "      <td>4</td>\n",
+       "      <td>0</td>\n",
+       "      <td>10</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.44</td>\n",
+       "      <td>0.4394</td>\n",
+       "      <td>0.62</td>\n",
+       "      <td>0.1045</td>\n",
+       "      <td>110</td>\n",
+       "      <td>172</td>\n",
+       "      <td>282</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>10471</th>\n",
+       "      <td>436.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>0.4848</td>\n",
+       "      <td>0.77</td>\n",
+       "      <td>0.0896</td>\n",
+       "      <td>140</td>\n",
+       "      <td>303</td>\n",
+       "      <td>443</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>10520</th>\n",
+       "      <td>438.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.56</td>\n",
+       "      <td>0.5303</td>\n",
+       "      <td>0.68</td>\n",
+       "      <td>0.1642</td>\n",
+       "      <td>56</td>\n",
+       "      <td>145</td>\n",
+       "      <td>201</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1536</th>\n",
+       "      <td>64.0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.26</td>\n",
+       "      <td>0.2424</td>\n",
+       "      <td>0.87</td>\n",
+       "      <td>0.2537</td>\n",
+       "      <td>5</td>\n",
+       "      <td>136</td>\n",
+       "      <td>141</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7924</th>\n",
+       "      <td>330.0</td>\n",
+       "      <td>4</td>\n",
+       "      <td>0</td>\n",
+       "      <td>12</td>\n",
+       "      <td>0</td>\n",
+       "      <td>4</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.34</td>\n",
+       "      <td>0.3485</td>\n",
+       "      <td>0.46</td>\n",
+       "      <td>0.1045</td>\n",
+       "      <td>12</td>\n",
+       "      <td>178</td>\n",
+       "      <td>190</td>\n",
+       "      <td>3</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       instant  season  yr  mnth  holiday  weekday  weathersit  temp   atemp  \\\n",
+       "6956     289.0       4   0    10        0        6           2  0.44  0.4394   \n",
+       "10471    436.0       1   1     3        0        6           2  0.50  0.4848   \n",
+       "10520    438.0       1   1     3        0        1           1  0.56  0.5303   \n",
+       "1536      64.0       1   0     3        0        3           2  0.26  0.2424   \n",
+       "7924     330.0       4   0    12        0        4           1  0.34  0.3485   \n",
+       "\n",
+       "        hum  windspeed  casual  registered  cnt  time_label  \n",
+       "6956   0.62     0.1045     110         172  282           2  \n",
+       "10471  0.77     0.0896     140         303  443           1  \n",
+       "10520  0.68     0.1642      56         145  201           2  \n",
+       "1536   0.87     0.2537       5         136  141           1  \n",
+       "7924   0.46     0.1045      12         178  190           3  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "#Split dataset into train and test sets\n",
+    "split = int(0.8*len(bike_rentals))\n",
+    "train = bike_rentals.sample(n = split)\n",
+    "test = bike_rentals.drop(train.index, axis = 0)\n",
+    "display(train.head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true
+   },
+   "source": [
+    "The 'casual' and 'registered' columns sum up to the 'cnt' column which is what we're trying to predict. We won't use these in our predictive algorithms since they will likely lead to overfitting. In addition, the 'instant' and 'yr' columns won't be useful for our analysis because the exact day and year that the hour occurred in won't have an impact on predicting future bike sales. The 'season' column is redundant since that information is already contained in the 'month' column"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 112,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#Create feature columns\n",
+    "features = train.columns.tolist()\n",
+    "features_to_delete = ['cnt', 'casual', 'registered', 'instant', 'yr', 'season']\n",
+    "\n",
+    "for feat in features_to_delete:\n",
+    "    features.remove(feat)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 113,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>mnth</th>\n",
+       "      <th>holiday</th>\n",
+       "      <th>weekday</th>\n",
+       "      <th>weathersit</th>\n",
+       "      <th>temp</th>\n",
+       "      <th>atemp</th>\n",
+       "      <th>hum</th>\n",
+       "      <th>windspeed</th>\n",
+       "      <th>time_label</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>6956</th>\n",
+       "      <td>10</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.44</td>\n",
+       "      <td>0.4394</td>\n",
+       "      <td>0.62</td>\n",
+       "      <td>0.1045</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>10471</th>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>0.4848</td>\n",
+       "      <td>0.77</td>\n",
+       "      <td>0.0896</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>10520</th>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.56</td>\n",
+       "      <td>0.5303</td>\n",
+       "      <td>0.68</td>\n",
+       "      <td>0.1642</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1536</th>\n",
+       "      <td>3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>3</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0.26</td>\n",
+       "      <td>0.2424</td>\n",
+       "      <td>0.87</td>\n",
+       "      <td>0.2537</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7924</th>\n",
+       "      <td>12</td>\n",
+       "      <td>0</td>\n",
+       "      <td>4</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.34</td>\n",
+       "      <td>0.3485</td>\n",
+       "      <td>0.46</td>\n",
+       "      <td>0.1045</td>\n",
+       "      <td>3</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       mnth  holiday  weekday  weathersit  temp   atemp   hum  windspeed  \\\n",
+       "6956     10        0        6           2  0.44  0.4394  0.62     0.1045   \n",
+       "10471     3        0        6           2  0.50  0.4848  0.77     0.0896   \n",
+       "10520     3        0        1           1  0.56  0.5303  0.68     0.1642   \n",
+       "1536      3        0        3           2  0.26  0.2424  0.87     0.2537   \n",
+       "7924     12        0        4           1  0.34  0.3485  0.46     0.1045   \n",
+       "\n",
+       "       time_label  \n",
+       "6956            2  \n",
+       "10471           1  \n",
+       "10520           2  \n",
+       "1536            1  \n",
+       "7924            3  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "display(train[features].head())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Linear Regression"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 114,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train Error: 146.6290210255227\n",
+      "Test Error: 146.76944489612524\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.linear_model import LinearRegression\n",
+    "\n",
+    "lr = LinearRegression()\n",
+    "lr.fit(train[features], train['cnt'])\n",
+    "\n",
+    "train_predictions = lr.predict(train[features])\n",
+    "test_predictions = lr.predict(test[features])\n",
+    "\n",
+    "train_error = np.sqrt(mean_squared_error(train_predictions, train['cnt']))\n",
+    "test_error = np.sqrt(mean_squared_error(test_predictions, test['cnt']))\n",
+    "\n",
+    "print('Train Error:', train_error)\n",
+    "print('Test Error:', test_error)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The linear regression model had an average error of ~147 bikes. The train error and test error were very similar, so it is likely that the model isn't overfitting, which is a good thing. One potential explanation for why this error is so high is because the dataset has a few extremely high values for bike rentals, and likely doesn't have features to represent the causes of these abnormal hours of bike rentals. For example, if there was a large event going on in Washington, DC (like a concert, sporting event, parade, etc.) bike rentals would be abnormally high, but the dataset doesn't have any features to explain such events to our model.\n",
+    "\n",
+    "We will see if we can improve on this error using the random forest algorithm. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Decision Tree"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 115,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train Error: 16.732447030241637\n",
+      "Test Error: 139.475506166851\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.tree import DecisionTreeRegressor\n",
+    "\n",
+    "model = DecisionTreeRegressor()\n",
+    "model.fit(train[features], train['cnt'])\n",
+    "\n",
+    "train_predictions = model.predict(train[features])\n",
+    "test_predictions = model.predict(test[features])\n",
+    "\n",
+    "train_error = np.sqrt(mean_squared_error(train_predictions, train['cnt']))\n",
+    "test_error = np.sqrt(mean_squared_error(test_predictions, test['cnt']))\n",
+    "\n",
+    "print('Train Error:', train_error)\n",
+    "print('Test Error:', test_error)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The decision tree algorithm performed very well on the training set, and poorly on the test set (even though it did have a lower test error than linear regression). This indicates that the model has low bias and high variance. We will see if we can lower both the bias and variance by implementing the random forest algorithm."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Random Forest"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 127,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train Error: 83.10910057377181\n",
+      "Test Error: 105.47741366845082\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.ensemble import RandomForestRegressor\n",
+    "\n",
+    "model = RandomForestRegressor(n_estimators = 50, random_state = 1, min_samples_leaf = 6)\n",
+    "model.fit(train[features], train['cnt'])\n",
+    "\n",
+    "train_predictions = model.predict(train[features])\n",
+    "test_predictions = model.predict(test[features])\n",
+    "\n",
+    "train_error = np.sqrt(mean_squared_error(train_predictions, train['cnt']))\n",
+    "test_error = np.sqrt(mean_squared_error(test_predictions, test['cnt']))\n",
+    "\n",
+    "print('Train Error:', train_error)\n",
+    "print('Test Error:', test_error)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The model is still slightly overfitting the data, but the random forest algorithm achieved the lowest test error of the 3 different algorithms."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.4.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
